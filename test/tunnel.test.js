@@ -234,6 +234,20 @@ function interfaceFixtures() {
   return { KNXInterface, connections, Socket };
 }
 
+test('discovery reads the address, topology, MAC and friendly name from a complete search response', () => {
+  const Manager = load('KNXInterfaceManager.js', { './KNXInterface': {} });
+  const response = Buffer.alloc(68);
+  response.set([6, 16, 2, 2, 0, 68, 8, 1, 192, 0, 2, 1]);
+  response.writeUInt16BE(0x1234, 18);
+  response.set([0, 17, 34, 51, 68, 85], 32);
+  response.write('Test gateway', 38);
+  const info = Manager.prototype.parseKNXResponse(response);
+  assert.equal(info.interfaceIp, '192.0.2.1');
+  assert.equal(info.knxAddress, '1.2.52');
+  assert.equal(info.interfaceMac, '001122334455');
+  assert.equal(info.interfaceName, 'Test gateway');
+});
+
 test('an IP change cancels active and queued writes and only opens the latest endpoint', async () => {
   const { KNXInterface, connections, Socket } = interfaceFixtures();
   const gateway = new KNXInterface({ interfaceIp: '192.0.2.1' });
